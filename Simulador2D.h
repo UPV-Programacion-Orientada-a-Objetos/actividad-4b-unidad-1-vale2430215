@@ -27,9 +27,13 @@ public:
     void redimensionarGrid(int nuevaF, int nuevaC);
     void agregarFuente(T valor); // Expansión manual del vector dinámico si es necesario
     void simularPaso(); // Implementación del algoritmo
-    // ... otros métodos de acceso y visualización
-    void mostrarGrid() const;
+    void setValor(int f, int c, T valor); // Asignar valor manualmente
+    void mostrarGrid() const; // Mostrar el grid
 };
+
+// -------------------------------------------------------
+// IMPLEMENTACIONES
+// -------------------------------------------------------
 
 // Constructor
 template <typename T>
@@ -65,13 +69,89 @@ Simulador2D<T>::~Simulador2D() {
     delete[] _fuentes;
 }
 
-// Mostrar matriz
+// Redimensionar matriz
+template <typename T>
+void Simulador2D<T>::redimensionarGrid(int nuevaF, int nuevaC) {
+    T **nuevo = new T*[nuevaF];
+    for (int i = 0; i < nuevaF; i++) {
+        nuevo[i] = new T[nuevaC];
+        for (int j = 0; j < nuevaC; j++)
+            nuevo[i][j] = 0;
+    }
+
+    int minF = (nuevaF < _filas) ? nuevaF : _filas;
+    int minC = (nuevaC < _columnas) ? nuevaC : _columnas;
+
+    for (int i = 0; i < minF; i++)
+        for (int j = 0; j < minC; j++)
+            nuevo[i][j] = _grid[i][j];
+
+    for (int i = 0; i < _filas; i++)
+        delete[] _grid[i];
+    delete[] _grid;
+
+    _grid = nuevo;
+    _filas = nuevaF;
+    _columnas = nuevaC;
+}
+
+// Agregar fuente dinámica
+template <typename T>
+void Simulador2D<T>::agregarFuente(T valor) {
+    if (_numFuentes >= _capacidadFuentes) {
+        _capacidadFuentes *= 2;
+        T *nuevo = new T[_capacidadFuentes];
+        for (int i = 0; i < _numFuentes; i++)
+            nuevo[i] = _fuentes[i];
+        delete[] _fuentes;
+        _fuentes = nuevo;
+    }
+    _fuentes[_numFuentes++] = valor;
+}
+
+// Simular un paso
+template <typename T>
+void Simulador2D<T>::simularPaso() {
+    T **nuevo = new T*[_filas];
+    for (int i = 0; i < _filas; i++)
+        nuevo[i] = new T[_columnas];
+
+    for (int i = 0; i < _filas; i++) {
+        for (int j = 0; j < _columnas; j++) {
+            if (i == 0 || j == 0 || i == _filas - 1 || j == _columnas - 1)
+                nuevo[i][j] = _grid[i][j];
+            else
+                nuevo[i][j] = (_grid[i-1][j] + _grid[i+1][j] +
+                               _grid[i][j-1] + _grid[i][j+1]) / 4.0;
+        }
+    }
+
+    for (int i = 0; i < _filas; i++)
+        for (int j = 0; j < _columnas; j++)
+            _grid[i][j] = nuevo[i][j];
+
+    for (int i = 0; i < _filas; i++)
+        delete[] nuevo[i];
+    delete[] nuevo;
+}
+
+// Asignar un valor manual a una celda
+template <typename T>
+void Simulador2D<T>::setValor(int f, int c, T valor) {
+    if (f >= 0 && f < _filas && c >= 0 && c < _columnas)
+        _grid[f][c] = valor;
+}
+
+// Mostrar el grid con formato del README
 template <typename T>
 void Simulador2D<T>::mostrarGrid() const {
     for (int i = 0; i < _filas; i++) {
-        for (int j = 0; j < _columnas; j++)
-            cout << _grid[i][j] << "\t";
-        cout << endl;
+        cout << "| ";
+        for (int j = 0; j < _columnas; j++) {
+            cout << _grid[i][j];
+            if (j < _columnas - 1) cout << "\t";
+        }
+        cout << " |" << endl;
     }
 }
 
